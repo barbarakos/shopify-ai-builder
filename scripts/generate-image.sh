@@ -9,7 +9,7 @@ OUTPUT_FILENAME="$2"
 OUTPUT_PATH="assets/${OUTPUT_FILENAME}"
 
 if [ -z "$REPLICATE_API_TOKEN" ] && [ -f ".env" ]; then
-  export $(grep -v '^#' .env | xargs)
+  set -a; source .env; set +a
 fi
 
 if [ -z "$REPLICATE_API_TOKEN" ]; then

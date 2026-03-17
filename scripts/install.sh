@@ -72,8 +72,9 @@ if command -v shopify &>/dev/null; then
 else
   if command -v brew &>/dev/null; then
     step "Installing Shopify CLI via Homebrew..."
-    brew tap shopify/shopify && brew install shopify-cli
-    ok "Shopify CLI installed: $(shopify version 2>/dev/null)"
+    (brew tap shopify/shopify && brew install shopify-cli) \
+      && ok "Shopify CLI installed: $(shopify version 2>/dev/null)" \
+      || { warn "Homebrew install failed. Trying npm..."; npm install -g @shopify/cli @shopify/theme && ok "Shopify CLI installed via npm"; }
   elif command -v npm &>/dev/null; then
     step "Installing Shopify CLI via npm..."
     npm install -g @shopify/cli @shopify/theme
