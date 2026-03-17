@@ -1,0 +1,14 @@
+# Credentials
+.env
+
+# Brand data (may contain proprietary brand info)
+brand-knowledge/brand-info.json
+
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+
+# Shopify CLI
+.shopify/
