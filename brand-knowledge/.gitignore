@@ -1,0 +1,3 @@
+# brand-info.json is gitignored at the root level
+# Uncomment below if you want to track it (e.g. brand info is not sensitive)
+# !../brand-knowledge/brand-info.json
