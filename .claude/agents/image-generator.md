@@ -74,7 +74,7 @@ For each image:
 
 0. Check if file already exists:
    ```bash
-   ls assets/<filename> 2>/dev/null && echo "EXISTS" || echo "NEW"
+   ls <theme_dir>/assets/<filename> 2>/dev/null && echo "EXISTS" || echo "NEW"
    ```
    If EXISTS: ask "Skip or overwrite?"
 
@@ -82,13 +82,13 @@ For each image:
 
 2. Generate:
    ```bash
-   export ENHANCED_PROMPT="<enhanced prompt>" && ./scripts/generate-image.sh "$ENHANCED_PROMPT" "<filename>"
+   export ENHANCED_PROMPT="<enhanced prompt>" && ./scripts/generate-image.sh "$ENHANCED_PROMPT" "<filename>" "<theme_dir>"
    ```
 
 3. Verify:
    ```bash
-   ls -lh assets/<filename>
-   file assets/<filename>
+   ls -lh <theme_dir>/assets/<filename>
+   file <theme_dir>/assets/<filename>
    ```
    Expected: image file, 100KB–2MB.
 
@@ -101,6 +101,6 @@ For each image:
 Report generated files and updated Liquid files.
 
 ```bash
-git add <theme_dir>/assets/*.jpg <theme_dir>/assets/*.png <theme_dir>/assets/*.webp <theme_dir>/sections/<prefix>-*.liquid
-git commit -m "feat: add AI images for <page-name>"
+git -C <theme_dir> add assets/*.jpg assets/*.png assets/*.webp sections/<prefix>-*.liquid
+git -C <theme_dir> commit -m "feat: add AI images for <page-name>"
 ```

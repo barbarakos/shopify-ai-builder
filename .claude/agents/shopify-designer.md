@@ -155,8 +155,8 @@ Every section:
 2. Tell user which template to assign in Shopify admin.
 3. Tell user to start dev server: `shopify theme dev --store <store>.myshopify.com --path <theme_dir>`
 4. Count image placeholders: "I left [N] image placeholders — run image-generator to fill them."
-5. Commit:
+5. Commit to theme repo:
    ```bash
-   git add <theme_dir>/sections/<prefix>-*.liquid <theme_dir>/templates/product.<prefix>-*.json <theme_dir>/templates/page.<prefix>-*.json <theme_dir>/assets/<prefix>-*.css <theme_dir>/assets/<prefix>-*.js
-   git commit -m "feat: add <prefix>-<page-type> page for <product/brand>"
+   git -C <theme_dir> add sections/<prefix>-*.liquid templates/product.<prefix>-*.json templates/page.<prefix>-*.json assets/<prefix>-*.css assets/<prefix>-*.js
+   git -C <theme_dir> commit -m "feat: add <prefix>-<page-type> page for <product/brand>"
    ```

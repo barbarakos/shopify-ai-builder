@@ -42,31 +42,53 @@ If prefix is empty or brand name is empty:
 
 1. Identify the file — ask if unclear.
 2. Check it's a prefixed file (not original theme). If original: "⚠️ This is part of your base Shopify theme. Modifying it could break updates. A safer option is to build a new prefixed version."
-3. Make the targeted change, run `shopify theme check`, ask "Does that look right in the preview?"
+3. Make the targeted change, run `shopify theme check --path <theme_dir>`, ask "Does that look right in the preview?"
 
 ## Git Deploy
 
-1. Show what's changed: `git status` + `git diff --stat HEAD`
-2. Ask: "Does this look right to push?"
-3. Get prefix and theme_dir:
-   ```bash
-   python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print(d['project']['theme_prefix'], d['project'].get('theme_dir', '.'))"
-   ```
-4. Stage project files:
-   ```bash
-   git add CLAUDE.md .claude/agents/ .env.example README.md docs/ scripts/
-   git add <theme_dir>/sections/<prefix>-*.liquid <theme_dir>/templates/product.<prefix>-*.json <theme_dir>/templates/page.<prefix>-*.json
-   git add <theme_dir>/assets/<prefix>-*.css <theme_dir>/assets/<prefix>-*.js <theme_dir>/assets/*.jpg <theme_dir>/assets/*.png <theme_dir>/assets/*.webp
-   ```
-   (If `theme_dir` is `.`, omit the prefix — e.g. `sections/<prefix>-*.liquid`)
-   Do NOT stage `.env` or `brand-knowledge/brand-info.json`.
-5. Commit with trailer:
-   ```bash
-   git commit -m "<message>
+The agent system repo and the theme repo are **separate git repos**. Deploy runs two commits:
+
+### A. Commit theme files to theme repo
+
+Get prefix and theme_dir:
+```bash
+python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print(d['project']['theme_prefix'], d['project'].get('theme_dir', '.'))"
+```
+
+Show what's changed in the theme repo:
+```bash
+git -C <theme_dir> status
+git -C <theme_dir> diff --stat HEAD
+```
+
+Ask: "Does this look right to push to the theme repo?"
+
+Stage and commit in the theme repo:
+```bash
+git -C <theme_dir> add sections/<prefix>-*.liquid templates/product.<prefix>-*.json templates/page.<prefix>-*.json
+git -C <theme_dir> add assets/<prefix>-*.css assets/<prefix>-*.js assets/*.jpg assets/*.png assets/*.webp
+git -C <theme_dir> commit -m "<message>
 
 Co-authored-by: Claude <noreply@anthropic.com>"
-   ```
-6. `git push origin main` — confirm pushed.
+git -C <theme_dir> push origin main
+```
+
+### B. Commit agent system files to this repo (if changed)
+
+```bash
+git status
+```
+
+If agent files changed (`.claude/agents/`, `CLAUDE.md`, `scripts/`, `docs/`):
+```bash
+git add CLAUDE.md .claude/agents/ .env.example README.md docs/ scripts/
+git commit -m "<message>
+
+Co-authored-by: Claude <noreply@anthropic.com>"
+git push origin main
+```
+
+Do NOT stage `.env` or `brand-knowledge/brand-info.json` in either repo.
 
 ## Post-Agent Summary
 

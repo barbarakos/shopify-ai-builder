@@ -45,38 +45,40 @@ If not logged in:
 shopify auth login --store <SHOPIFY_STORE_NAME>.myshopify.com
 ```
 
-### 4. Set Brand Prefix and Theme Directory
+### 4. Set Brand Prefix and Theme Repo Path
 
 Ask two questions:
 
 1. "What 2–4 letter prefix should new files use? This keeps your custom pages separate from the base theme. Use your brand initials — e.g. Nike → `nk`, Kelle Skin → `ks`, The Brand Co → `tb`."
 
-2. "Where should your Shopify theme files live? Options:
-   - **Repo root** (default — type `.`) — theme files at `sections/`, `templates/`, etc.
-   - **Subfolder** (e.g. `theme`) — theme files at `theme/sections/`, `theme/templates/`, etc."
+2. "Where is your Shopify theme repo? This is the directory where your theme files live (it can be a separate git repo).
+   - If your theme and this agent repo are the same directory, type `.`
+   - Otherwise provide the path — e.g. `/Users/you/my-store-theme` or `../my-store-theme`"
 
 Once they answer, write both to `brand-knowledge/brand-info.json` using the Edit tool:
 - `project.theme_prefix` = their prefix
-- `project.theme_dir` = their directory choice (`.` if they chose root)
+- `project.theme_dir` = the path they provided (`.` if same directory)
 
 Verify:
 ```bash
-python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print('Prefix:', d['project']['theme_prefix'], '| Theme dir:', d['project']['theme_dir'])"
+python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print('Prefix:', d['project']['theme_prefix'], '| Theme repo:', d['project']['theme_dir'])"
 ```
 
 ### 5. Pull Theme from Shopify
 
-Ask: "Ready to pull your Shopify theme? This downloads your current live theme files."
+Ask: "Ready to pull your Shopify theme? This downloads your current live theme files into `<theme_dir>`."
 
-Get `theme_dir` from brand-info.json first:
+Get `theme_dir`:
 ```bash
 python3 -c "import json; print(json.load(open('brand-knowledge/brand-info.json'))['project']['theme_dir'])"
 ```
 
-If `theme_dir` is not `.`, create the directory first:
+If `theme_dir` is not `.`, verify the directory exists:
 ```bash
-mkdir -p <theme_dir>
+ls <theme_dir> 2>/dev/null && echo "exists" || echo "NOT FOUND"
 ```
+
+If not found: "That path doesn't exist yet — should I create it, or did you mean a different path?"
 
 Pull:
 ```bash
@@ -88,18 +90,18 @@ After pulling, verify:
 ls <theme_dir>/templates/ <theme_dir>/sections/ <theme_dir>/assets/ 2>/dev/null && echo "Theme files present" || echo "Pull may have failed — check output above"
 ```
 
-### 6. Check Git Remote
+### 6. Check Git Remote for Theme Repo
 
 ```bash
-git remote -v
+git -C <theme_dir> remote -v
 ```
 
 If no remote:
-- Ask: "Do you have a GitHub repo for this project?"
-- If yes: `git remote add origin <their-url>`
-- If no:
-  1. `gh repo list --limit 10` — show them what exists
-  2. If no match: `gh repo create shopify-ai-builder --private --source=. --remote=origin --push`
+- Ask: "Do you have a GitHub repo for your theme?"
+- If yes: `git -C <theme_dir> remote add origin <their-url>`
+- If no: `gh repo create <store-name>-theme --private --source=<theme_dir> --remote=origin --push`
+
+Note: the agent system repo (`shopify-ai-builder`) and the theme repo are separate — git operations on theme files always use `git -C <theme_dir>`.
 
 ### 7. Extract Brand Knowledge
 
@@ -113,7 +115,7 @@ Once they provide URLs, say: "I'll extract your brand identity now." Then use th
 ✅ Shopify CLI connected to <store>
 ✅ Theme pulled to <theme_dir>/ (<N> templates, <N> sections found)
 ✅ Brand prefix set to `<prefix>`
-✅ GitHub configured
+✅ Theme repo git configured
 ✅ Brand knowledge extracted (or ⚠️ Brand info pending)
 ✅ Image generation ready (or ⚠️ Replicate token missing)
 ```

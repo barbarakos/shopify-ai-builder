@@ -1,12 +1,14 @@
 #!/bin/bash
-# Usage: ./scripts/generate-image.sh "prompt" output-filename.jpg
+# Usage: ./scripts/generate-image.sh "prompt" output-filename.jpg [theme-dir]
+# theme-dir: path to Shopify theme repo (default: current directory)
 # Requires: REPLICATE_API_TOKEN in environment or .env
 
 set -e
 
 PROMPT="$1"
 OUTPUT_FILENAME="$2"
-OUTPUT_PATH="assets/${OUTPUT_FILENAME}"
+THEME_DIR="${3:-.}"
+OUTPUT_PATH="${THEME_DIR}/assets/${OUTPUT_FILENAME}"
 
 if [ -z "$REPLICATE_API_TOKEN" ] && [ -f ".env" ]; then
   set -a; source .env; set +a
