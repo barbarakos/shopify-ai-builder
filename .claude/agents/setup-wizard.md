@@ -42,8 +42,9 @@ If already logged in and the correct store is shown: skip to step 4.
 
 If not logged in:
 ```bash
-shopify auth login --store <SHOPIFY_STORE_NAME>.myshopify.com
+shopify auth login
 ```
+This opens a browser — log in with the Shopify account that has access to the store.
 
 ### 4. Set Brand Prefix and Theme Repo Path
 
