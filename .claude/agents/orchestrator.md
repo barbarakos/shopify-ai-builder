@@ -27,7 +27,8 @@ try:
     d = json.load(open('brand-knowledge/brand-info.json'))
     prefix = d['project']['theme_prefix']
     name = d['brand']['name']
-    print(f'Prefix: {prefix or \"NOT SET\"} | Brand: {name or \"EMPTY\"}')
+    theme_dir = d['project'].get('theme_dir', '.')
+    print(f'Prefix: {prefix or \"NOT SET\"} | Brand: {name or \"EMPTY\"} | Theme dir: {theme_dir}')
 except Exception as e:
     print(f'brand-info.json missing or invalid: {e}')
 "
@@ -47,16 +48,17 @@ If prefix is empty or brand name is empty:
 
 1. Show what's changed: `git status` + `git diff --stat HEAD`
 2. Ask: "Does this look right to push?"
-3. Get prefix:
+3. Get prefix and theme_dir:
    ```bash
-   python3 -c "import json; print(json.load(open('brand-knowledge/brand-info.json'))['project']['theme_prefix'])"
+   python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print(d['project']['theme_prefix'], d['project'].get('theme_dir', '.'))"
    ```
 4. Stage project files:
    ```bash
    git add CLAUDE.md .claude/agents/ .env.example README.md docs/ scripts/
-   git add sections/<prefix>-*.liquid templates/product.<prefix>-*.json templates/page.<prefix>-*.json
-   git add assets/<prefix>-*.css assets/<prefix>-*.js assets/*.jpg assets/*.png assets/*.webp
+   git add <theme_dir>/sections/<prefix>-*.liquid <theme_dir>/templates/product.<prefix>-*.json <theme_dir>/templates/page.<prefix>-*.json
+   git add <theme_dir>/assets/<prefix>-*.css <theme_dir>/assets/<prefix>-*.js <theme_dir>/assets/*.jpg <theme_dir>/assets/*.png <theme_dir>/assets/*.webp
    ```
+   (If `theme_dir` is `.`, omit the prefix — e.g. `sections/<prefix>-*.liquid`)
    Do NOT stage `.env` or `brand-knowledge/brand-info.json`.
 5. Commit with trailer:
    ```bash

@@ -7,12 +7,15 @@
 - Always run `shopify theme check` before committing.
 - Image placeholders: use `{{ 'placeholder.svg' | asset_url }}` with `data-image-prompt="<prompt>"` and `data-image-filename="<prefix>-<name>.jpg"` on every `<img>` that needs AI generation.
 
-## Getting the Theme Prefix
+## Getting the Theme Prefix and Directory
 ```bash
-python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print(d['project']['theme_prefix'])" 2>/dev/null || echo "PREFIX NOT SET — run setup-wizard first"
+python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print('Prefix:', d['project']['theme_prefix'], '| Theme dir:', d['project'].get('theme_dir', '.'))" 2>/dev/null || echo "brand-info.json missing — run setup-wizard first"
 ```
 
+Theme files live under `<theme_dir>/` (e.g. `theme_dir=.` means root, `theme_dir=theme` means `theme/sections/`, `theme/templates/`, etc.).
+
 ## Shopify Theme Structure
+All paths below are relative to `theme_dir`:
 - `templates/` — page-type routing (JSON or Liquid)
 - `sections/` — reusable, schema-driven page components
 - `blocks/` — section sub-components
@@ -22,15 +25,16 @@ python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); p
 
 ## Running the Dev Server
 ```bash
-# Replace <storename> with your Shopify store slug (e.g., my-store for my-store.myshopify.com)
-shopify theme dev --store <storename>.myshopify.com
+# Replace <storename> and <theme_dir> from brand-info.json
+shopify theme dev --store <storename>.myshopify.com --path <theme_dir>
+# If theme_dir is ".", omit --path
 ```
 
 ## Naming Convention (all use configurable prefix)
-- New templates: `templates/product.<prefix>-<feature>.json` or `templates/page.<prefix>-<feature>.json`
-- New sections: `sections/<prefix>-<feature>.liquid`
-- New blocks: `blocks/<prefix>-<feature>.liquid`
-- New assets: `assets/<prefix>-<name>.css` or `assets/<prefix>-<name>.js`
+- New templates: `<theme_dir>/templates/product.<prefix>-<feature>.json` or `<theme_dir>/templates/page.<prefix>-<feature>.json`
+- New sections: `<theme_dir>/sections/<prefix>-<feature>.liquid`
+- New blocks: `<theme_dir>/blocks/<prefix>-<feature>.liquid`
+- New assets: `<theme_dir>/assets/<prefix>-<name>.css` or `<theme_dir>/assets/<prefix>-<name>.js`
 
 ## Available Agents
 Agent definitions live in `.claude/agents/` (project-level).

@@ -45,55 +45,47 @@ If not logged in:
 shopify auth login --store <SHOPIFY_STORE_NAME>.myshopify.com
 ```
 
-### 4. Set Brand Prefix
+### 4. Set Brand Prefix and Theme Directory
 
-Ask: "What 2–4 letter prefix should new files use? This keeps your custom pages separate from the base theme. Use your brand initials — e.g. Nike → `nk`, Kelle Skin → `ks`, The Brand Co → `tb`."
+Ask two questions:
 
-Once they answer, write it to `brand-knowledge/brand-info.json`:
+1. "What 2–4 letter prefix should new files use? This keeps your custom pages separate from the base theme. Use your brand initials — e.g. Nike → `nk`, Kelle Skin → `ks`, The Brand Co → `tb`."
 
-```bash
-python3 - <<'PYEOF'
-import json, sys
+2. "Where should your Shopify theme files live? Options:
+   - **Repo root** (default — type `.`) — theme files at `sections/`, `templates/`, etc.
+   - **Subfolder** (e.g. `theme`) — theme files at `theme/sections/`, `theme/templates/`, etc."
 
-prefix = sys.argv[1] if len(sys.argv) > 1 else ""
-store = sys.argv[2] if len(sys.argv) > 2 else ""
-
-with open('brand-knowledge/brand-info.json', 'r') as f:
-    data = json.load(f)
-
-if prefix:
-    data['project']['theme_prefix'] = prefix
-if store:
-    data['project']['shopify_store'] = store
-
-with open('brand-knowledge/brand-info.json', 'w') as f:
-    json.dump(data, f, indent=2)
-
-print(f"brand-info.json updated — prefix: {data['project']['theme_prefix']}")
-PYEOF
-```
-
-Call it as: `python3 <above script> <prefix> <store_name>`
-
-Or write the JSON values directly using the Write/Edit tool.
+Once they answer, write both to `brand-knowledge/brand-info.json` using the Edit tool:
+- `project.theme_prefix` = their prefix
+- `project.theme_dir` = their directory choice (`.` if they chose root)
 
 Verify:
 ```bash
-python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print('Prefix:', d['project']['theme_prefix'])"
+python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print('Prefix:', d['project']['theme_prefix'], '| Theme dir:', d['project']['theme_dir'])"
 ```
 
 ### 5. Pull Theme from Shopify
 
-Ask: "Ready to pull your Shopify theme into this directory? This downloads your current live theme files."
+Ask: "Ready to pull your Shopify theme? This downloads your current live theme files."
 
-If yes:
+Get `theme_dir` from brand-info.json first:
 ```bash
-shopify theme pull --store <SHOPIFY_STORE_NAME>.myshopify.com
+python3 -c "import json; print(json.load(open('brand-knowledge/brand-info.json'))['project']['theme_dir'])"
+```
+
+If `theme_dir` is not `.`, create the directory first:
+```bash
+mkdir -p <theme_dir>
+```
+
+Pull:
+```bash
+shopify theme pull --store <SHOPIFY_STORE_NAME>.myshopify.com --path <theme_dir>
 ```
 
 After pulling, verify:
 ```bash
-ls templates/ sections/ assets/ 2>/dev/null && echo "Theme files present" || echo "Pull may have failed — check output above"
+ls <theme_dir>/templates/ <theme_dir>/sections/ <theme_dir>/assets/ 2>/dev/null && echo "Theme files present" || echo "Pull may have failed — check output above"
 ```
 
 ### 6. Check Git Remote
@@ -119,7 +111,7 @@ Once they provide URLs, say: "I'll extract your brand identity now." Then use th
 
 ```
 ✅ Shopify CLI connected to <store>
-✅ Theme pulled (<N> templates, <N> sections found)
+✅ Theme pulled to <theme_dir>/ (<N> templates, <N> sections found)
 ✅ Brand prefix set to `<prefix>`
 ✅ GitHub configured
 ✅ Brand knowledge extracted (or ⚠️ Brand info pending)

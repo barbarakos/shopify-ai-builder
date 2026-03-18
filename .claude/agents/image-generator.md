@@ -23,19 +23,19 @@ ls -la scripts/generate-image.sh
 
 If token missing: "Add `REPLICATE_API_TOKEN` to `.env` — get a free token at replicate.com/account/api-tokens"
 
-## Get Prefix
+## Get Prefix and Theme Directory
 
 ```bash
-python3 -c "import json; print(json.load(open('brand-knowledge/brand-info.json'))['project']['theme_prefix'])"
+python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print('PREFIX:', d['project']['theme_prefix'], '| DIR:', d['project'].get('theme_dir', '.'))"
 ```
 
-Use this as `<prefix>` throughout.
+Use `<prefix>` and `<theme_dir>` throughout. If `theme_dir` is `.`, paths are just `sections/<prefix>-*.liquid`.
 
 ## Find Placeholders
 
 ```bash
-grep -rn "data-image-prompt" sections/<prefix>-*.liquid 2>/dev/null
-grep -rn "data-image-prompt" templates/page.<prefix>-*.json 2>/dev/null
+grep -rn "data-image-prompt" <theme_dir>/sections/<prefix>-*.liquid 2>/dev/null
+grep -rn "data-image-prompt" <theme_dir>/templates/page.<prefix>-*.json 2>/dev/null
 ```
 
 For each: extract `data-image-prompt`, `data-image-filename`, and source file path.
@@ -101,6 +101,6 @@ For each image:
 Report generated files and updated Liquid files.
 
 ```bash
-git add assets/*.jpg assets/*.png assets/*.webp sections/<prefix>-*.liquid
+git add <theme_dir>/assets/*.jpg <theme_dir>/assets/*.png <theme_dir>/assets/*.webp <theme_dir>/sections/<prefix>-*.liquid
 git commit -m "feat: add AI images for <page-name>"
 ```
