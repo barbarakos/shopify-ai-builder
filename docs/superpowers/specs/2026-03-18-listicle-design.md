@@ -62,7 +62,13 @@ Each row contains:
 | 6 | Save Thousands vs. Laser, Waxing & Threading | The average woman spends $2,400+ per year on waxing alone. Three bottles of this serum cost $159. The math is obvious — and unlike laser, it works on all hair colors with no pain, no downtime. | Lifestyle flat lay: serum bottle alongside calculator or coins, cream and sage green styling |
 | 7 | 60-Day Money-Back Guarantee — Zero Risk | We're so confident in this formula that if you don't see results in 60 days, you get a full refund. No questions asked. Over 16,374 five-star reviews say you won't need it. | Serum bottle with a soft gold/cream guarantee badge overlay, clean minimal product photography |
 
-**Schema settings per reason:** headline, body copy, image (with alt text). Image placeholders use `{{ 'placeholder.svg' | asset_url }}` with `data-image-prompt` and `data-image-filename` attributes.
+**Schema:** Each reason is a **block** of type `reason` with fields:
+- `heading` (text)
+- `body` (textarea)
+- `image` (image_picker)
+- `image_alt` (text)
+
+Image placeholders use `{{ 'placeholder.svg' | asset_url }}` with `data-image-prompt` and `data-image-filename` attributes. Images use `loading="lazy"` on all below-fold instances (reasons 2–7); reason 1 image uses `loading="eager"` as it may be above the fold.
 
 ---
 
@@ -89,7 +95,10 @@ Each row contains:
   - Laura M. — menopause + laser comparison story
 - Each card: star rating (5 stars), quote text, customer name
 - Layout: 3-column desktop, single column mobile (stacked)
-- **Schema settings:** each testimonial's name, quote, and rating
+- **Schema:** Each testimonial is a **block** of type `testimonial` with fields:
+  - `name` (text)
+  - `quote` (textarea)
+  - `rating` (range, 1–5, default 5)
 
 ---
 
@@ -103,15 +112,16 @@ Each row contains:
 ---
 
 ### Template (`templates/page.ks-listicle.json`)
-Section order:
+
+The reasons section is **block-based** — each reason is a block of type `reason` with fields: `heading`, `body`, `image`, `image_alt`. The section is instantiated **twice** in the template JSON using distinct keys (`ks-listicle-reasons-1` and `ks-listicle-reasons-2`). The first instance contains blocks for reasons 1–4; the second contains blocks for reasons 5–7. The stats section is inserted between them.
+
+Section order (with template JSON keys):
 1. `ks-listicle-hero`
-2. `ks-listicle-reasons` (reasons 1–4)
+2. `ks-listicle-reasons-1` (reasons 1–4, blocks assigned individually)
 3. `ks-listicle-stats`
-4. `ks-listicle-reasons` continued (reasons 5–7) — or stats bar is placed inline via the section's own schema
+4. `ks-listicle-reasons-2` (reasons 5–7, blocks assigned individually)
 5. `ks-listicle-testimonials`
 6. `ks-listicle-cta`
-
-> Note: Since Shopify templates reference sections, the stats bar placement mid-reasons will be handled by including the stats section between two uses of the reasons section (split 4+3), OR by building the stats bar as an optional block inside `ks-listicle-reasons`. The simpler approach is a separate section inserted at position 3.
 
 ---
 
