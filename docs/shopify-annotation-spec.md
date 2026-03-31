@@ -40,7 +40,7 @@ The local designer builds a plain HTML/CSS page using **mock data**. Every eleme
 Translator output:
 ```liquid
 <h1>{{ section.settings.heading }}</h1>
-<p>{{ section.settings.subheading }}</p>
+{{ section.settings.subheading }}
 ```
 Schema entry:
 ```json

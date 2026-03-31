@@ -74,16 +74,15 @@ For each `data-shopify-section`, create `<theme_dir>/sections/<prefix>-<section-
     --secondary: {{ section.settings.secondary_color }};
     --bg: {{ section.settings.bg_color }};
     --text: {{ section.settings.text_color }};
-    --font-heading: {{ section.settings.font_heading }};
-    --font-body: {{ section.settings.font_body }};
+    --font-heading: {{ section.settings.font_heading.family }};
+    --font-body: {{ section.settings.font_body.family }};
     --radius: {{ section.settings.border_radius }};
   }
 {% endstyle %}
 
 {% comment %}
-  IMPORTANT: The outermost element of the section HTML must carry the class
-  "<prefix>-section-{{ section.id }}" so the scoped CSS variables above apply to it.
-  Add this class to the section's root HTML element (the data-shopify-section wrapper).
+  NOTE: Add class="<prefix>-section-{{ section.id }}" to the section's root HTML element
+  so the scoped CSS variables above apply to it.
   Example: <section class="<prefix>-hero-split <prefix>-section-{{ section.id }}">
 {% endcomment %}
 
@@ -128,9 +127,18 @@ Schema entry: `{"type": "text", "id": "heading", "label": "Heading", "default": 
 <!-- Input -->
 <p data-shopify-setting="subheading" data-shopify-type="richtext">Clinically proven.</p>
 <!-- Output -->
-<p>{{ section.settings.subheading }}</p>
+{{ section.settings.subheading }}
 ```
 Schema entry: `{"type": "richtext", "id": "subheading", "label": "Subheading", "default": "<p>Clinically proven.</p>"}`
+
+**`data-shopify-setting="key"` with `data-shopify-type="url"`:**
+```html
+<!-- Input -->
+<a data-shopify-setting="button_link" data-shopify-type="url" href="/products/serum">Shop Now</a>
+<!-- Output -->
+<a href="{{ section.settings.button_link }}">Shop Now</a>
+```
+Schema entry: `{"type": "url", "id": "button_link", "label": "Button link"}` (note: `url` type cannot have a `"default"` value)
 
 **`data-shopify-setting="key"` with `data-shopify-type="image_picker"`:**
 ```html
@@ -139,10 +147,7 @@ Schema entry: `{"type": "richtext", "id": "subheading", "label": "Subheading", "
      data-image-prompt="..." data-image-filename="ks-hero.jpg" src="mock.jpg">
 <!-- Output -->
 {%- if section.settings.hero_image -%}
-  {{ section.settings.hero_image | image_url: width: 800 | image_tag:
-    loading: 'lazy',
-    class: '<prefix>-<section>__hero-img'
-  }}
+  {{ section.settings.hero_image | image_url: width: 800 | image_tag: loading: 'lazy', alt: section.settings.hero_image.alt, class: '<prefix>-<section>__hero-img' }}
 {%- else -%}
   <svg class="<prefix>-<section>__hero-img" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg"
     data-image-prompt="..."
@@ -186,6 +191,21 @@ Block schema entry:
   ]
 }
 ```
+
+**Multiple block types in one section:** When a section has multiple block types (e.g. `paragraph`, `pullquote`, `image`), use a SINGLE `{% for block in section.blocks %}` loop with multiple type guards inside it — never separate loops:
+
+```liquid
+{% for block in section.blocks %}
+  {% if block.type == "paragraph" %}
+    <p {{ block.shopify_attributes }}>{{ block.settings.text }}</p>
+  {% elsif block.type == "pullquote" %}
+    <blockquote {{ block.shopify_attributes }}>{{ block.settings.quote }}</blockquote>
+  {% elsif block.type == "image" %}
+    ...
+  {% endif %}
+{% endfor %}
+```
+Multiple separate loops would render blocks out of order and is against Shopify's block model.
 
 **`data-shopify-var="<liquid.variable>"`:**
 ```html
@@ -252,7 +272,7 @@ Copy the full `<style>` block from the HTML into the `{% style %}` tag at the to
 {% endstyle %}
 ```
 
-When the HTML has a shared `<style>` block at the top covering multiple sections, extract only the rules that apply to the current section. Use the section's root class name (matching the `data-shopify-section` value) to identify which rules belong to it. The global `:root` token block and CSS reset should be included in every section's `{% style %}` tag so each section is self-contained.
+When the HTML has a shared `<style>` block at the top covering multiple sections, extract only the rules that apply to the current section. Use the section's root class name (matching the `data-shopify-section` value) to identify which rules belong to it. Include section-specific `:root` CSS variable overrides and the scoped class rules in the `{% style %}` tag. Do NOT include the universal CSS reset (`*, *::before, *::after { ... }`) or a global `body` rule inside `{% style %}` — these should go in a shared asset file (e.g. `assets/<prefix>-base.css`) and loaded once from the layout. Repeating the reset in every section's `{% style %}` block causes it to be injected multiple times on pages with multiple sections.
 
 ---
 

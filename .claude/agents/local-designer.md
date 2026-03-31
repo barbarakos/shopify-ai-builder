@@ -31,8 +31,8 @@ print('Voice:', d['brand']['voice'])
 print('Audience:', d['product']['target_audience'])
 print('Product:', d['product']['name'])
 print('Benefits:', d['product']['benefits'])
-print('Stats:', d['content']['stats'][:3])
-print('Testimonials:', d['content']['testimonials'][:2])
+print('Stats:', d.get('content', {}).get('stats', [])[:3])
+print('Testimonials:', d.get('content', {}).get('testimonials', [])[:2])
 "
 ```
 
