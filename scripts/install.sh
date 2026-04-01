@@ -111,7 +111,7 @@ if [ -f .env ]; then
 else
   cp .env.example .env
   ok "Created .env from .env.example"
-  warn "Open .env and fill in REPLICATE_API_TOKEN and SHOPIFY_STORE_NAME"
+  warn "Open .env and fill in GEMINI_API_KEY and SHOPIFY_STORE_NAME"
 fi
 
 # ── Done ──────────────────────────────────────────────────────────
@@ -122,7 +122,7 @@ echo -e "${GREEN}  Shopify AI Builder setup complete!${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo "Next steps:"
-echo "  1. Edit .env → add REPLICATE_API_TOKEN and SHOPIFY_STORE_NAME"
+echo "  1. Edit .env → add GEMINI_API_KEY and SHOPIFY_STORE_NAME"
 echo "  2. Open Claude Code in this directory"
 echo "  3. Say: 'Use the setup-wizard agent to get started'"
 echo ""

@@ -6,7 +6,7 @@ A Claude Code agent system for building high-converting Shopify pages with AI.
 
 - Extracts your brand identity from your website (colors, fonts, copy, tone)
 - Builds product landing pages, listicles, and advertorials in Liquid
-- Generates realistic AI product photography with Replicate
+- Generates realistic AI product photography with Gemini
 - Never touches your existing theme files — all new pages use your brand prefix
 - Mobile-first, schema-driven, editable in Shopify theme editor
 
@@ -31,10 +31,10 @@ This installs: Claude Code plugins (Superpowers, Frontend Design), MCPs (Shopify
 
 ```bash
 cp .env.example .env
-# Edit .env and add your REPLICATE_API_TOKEN and SHOPIFY_STORE_NAME
+# Edit .env and add your GEMINI_API_KEY and SHOPIFY_STORE_NAME
 ```
 
-Get a free Replicate API token at [replicate.com/account/api-tokens](https://replicate.com/account/api-tokens).
+Get a free Gemini API key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
 
 ### 4. Open Claude Code and run setup
 
@@ -62,7 +62,9 @@ Build me a product landing page for [your product name].
 | `orchestrator` | Main entry point — routes all requests |
 | `setup-wizard` | One-time setup: Shopify, GitHub, brand |
 | `brand-knowledge` | Extracts brand info from your website |
-| `shopify-designer` | Creates Liquid pages (PDP, listicle, advertorial) |
+| `copywriter` | Writes conversion-focused copy (listicles, advertorials, PDPs) |
+| `local-designer` | Builds standalone HTML/CSS designs locally with Playwright iteration |
+| `shopify-designer` | Translates approved local designs into Shopify Liquid sections/templates |
 | `image-generator` | Generates AI product photos |
 
 ## Requirements
@@ -71,7 +73,7 @@ Build me a product landing page for [your product name].
 - [Claude Code](https://claude.ai/code) CLI
 - A Shopify store
 - A GitHub account
-- Free [Replicate](https://replicate.com) account (for AI images)
+- Free [Gemini API key](https://aistudio.google.com/apikey) (for AI images)
 
 ## License
 
