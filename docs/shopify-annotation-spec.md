@@ -34,7 +34,7 @@ The local designer builds a plain HTML/CSS page using **mock data**. Every eleme
 <p data-shopify-setting="subheading" data-shopify-type="richtext">Clinically proven formula</p>
 <img data-shopify-setting="hero_image" data-shopify-type="image_picker"
      data-image-prompt="Woman 40s glowing skin morning light"
-     data-image-filename="ks-hero-main.jpg" src="mock-hero.jpg">
+     data-image-filename="<prefix>-hero-main.jpg" src="mock-hero.jpg">
 ```
 
 Translator output:
@@ -59,7 +59,7 @@ Schema entry:
   <p data-shopify-setting="body" data-shopify-type="richtext">In as little as 14 days</p>
   <img data-shopify-setting="image" data-shopify-type="image_picker"
        data-image-prompt="Close up of clear skin texture"
-       data-image-filename="ks-reason-1.jpg" src="mock-reason.jpg">
+       data-image-filename="<prefix>-reason-1.jpg" src="mock-reason.jpg">
 </div>
 ```
 
@@ -158,11 +158,25 @@ Note: The shopify-designer translator must warn the user if a referenced snippet
     <div class="hero-image">
       <img data-shopify-setting="hero_image" data-shopify-type="image_picker"
            data-image-prompt="Woman in her 40s touching her face, glowing skin, morning light, natural, not posed"
-           data-image-filename="ks-hero-main.jpg"
+           data-image-filename="<prefix>-hero-main.jpg"
            src="mock-hero.jpg" style="width:100%; border-radius:12px;">
     </div>
   </div>
 </section>
+```
+
+---
+
+### `data-image-ref="<path>"`
+**On:** `<img>` elements that need AI generation
+**Means:** Path to a reference image for image-to-image generation. Used when the generated image must show the actual product packaging, bottle, or branded object. Path is relative to the project root (e.g. `brand-knowledge/<prefix>-product-ref.jpg`). When present, the image-generator agent passes it to the generation script so the real product appears in the output.
+
+```html
+<img data-shopify-setting="hero_image" data-shopify-type="image_picker"
+     data-image-prompt="Woman 45 holding the brand serum bottle, warm natural light, lifestyle photography"
+     data-image-filename="<prefix>-hero-main.jpg"
+     data-image-ref="brand-knowledge/<prefix>-product-ref.jpg"
+     src="mock-hero.jpg" style="width:100%; border-radius:12px;">
 ```
 
 ---
@@ -174,8 +188,9 @@ Note: The shopify-designer translator must warn the user if a referenced snippet
 3. Repeatable items (listicle reasons, benefit cards, testimonials) must use `data-shopify-block`.
 4. Product price, title, and other live Shopify variables must use `data-shopify-var`.
 5. All images that need AI generation must have `data-image-prompt` and `data-image-filename`.
-6. Mock data must be realistic (real prices, real-sounding copy, real dimensions).
-7. Do NOT nest `data-shopify-section` inside another `data-shopify-section` — sections are flat.
+6. **If the prompt describes the actual branded product (bottle, box, packaging) appearing in the image, also add `data-image-ref="brand-knowledge/<prefix>-product-ref.jpg"`** so the image generator uses the real product photo as a reference.
+7. Mock data must be realistic (real prices, real-sounding copy, real dimensions).
+8. Do NOT nest `data-shopify-section` inside another `data-shopify-section` — sections are flat.
 
 ## Rules for shopify-designer (translator)
 
@@ -186,4 +201,4 @@ Note: The shopify-designer translator must warn the user if a referenced snippet
 5. `data-shopify-if` values are used verbatim inside `{% if %}`.
 6. `data-shopify-action` values are expanded per the action table above.
 7. Remove all `data-shopify-*` attributes from final Liquid output (they are build-time only).
-8. Keep `data-image-prompt` and `data-image-filename` on `<img>` tags — the image-generator agent needs them.
+8. Keep `data-image-prompt`, `data-image-filename`, and `data-image-ref` on `<img>` tags — the image-generator agent needs them.

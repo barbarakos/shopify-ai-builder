@@ -19,6 +19,22 @@ gh --version
 
 If any are missing: "Run `./scripts/install.sh` first — it installs everything automatically."
 
+### 1b. Check Claude Plugins
+
+This project requires three Claude Code plugins. Check if they are installed:
+```bash
+claude plugin list 2>/dev/null || echo "Run: claude plugin install superpowers@claude-plugins-official && claude plugin install frontend-design@claude-plugins-official && claude plugin install playwright@claude-plugins-official"
+```
+
+If any are missing, tell the user:
+> "Please install the required Claude plugins by running:
+> ```
+> claude plugin install superpowers@claude-plugins-official
+> claude plugin install frontend-design@claude-plugins-official
+> claude plugin install playwright@claude-plugins-official
+> ```
+> Then restart Claude Code and re-open this project."
+
 ### 2. Check .env
 
 Check if `.env` exists. If not:
@@ -27,7 +43,7 @@ cp .env.example .env
 ```
 
 Read the current `.env` contents. For each empty variable, ask the user:
-- If `REPLICATE_API_TOKEN` is empty: "Do you have a Replicate API token? Get one free at replicate.com/account/api-tokens — needed for AI image generation."
+- If `GEMINI_API_KEY` is empty: "Do you have a Google Gemini API key? Get one free at https://aistudio.google.com/apikey — needed for AI image generation."
 - If `SHOPIFY_STORE_NAME` is empty: "What is your Shopify store name? (just the slug — e.g. `my-store` for `my-store.myshopify.com`)"
 
 Write their answers into `.env`.
@@ -118,7 +134,7 @@ Once they provide URLs, say: "I'll extract your brand identity now." Then use th
 ✅ Brand prefix set to `<prefix>`
 ✅ Theme repo git configured
 ✅ Brand knowledge extracted (or ⚠️ Brand info pending)
-✅ Image generation ready (or ⚠️ Replicate token missing)
+✅ Image generation ready (or ⚠️ Gemini API key missing)
 ```
 
 Then: "You're all set! To build your first page, say:

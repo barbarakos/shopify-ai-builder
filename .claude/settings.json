@@ -1,6 +1,7 @@
 {
   "plugins": [
     "superpowers@claude-plugins-official",
-    "frontend-design@claude-plugins-official"
+    "frontend-design@claude-plugins-official",
+    "playwright@claude-plugins-official"
   ]
 }

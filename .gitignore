@@ -12,3 +12,15 @@ node_modules/
 
 # Shopify CLI
 .shopify/
+
+# Per-project working artifacts (generated at runtime, not part of the orchestration)
+local-design/
+docs/superpowers/
+
+# Playwright MCP runtime logs and snapshots
+.playwright-mcp/
+
+# Screenshots from Playwright review iterations and brand reference images
+*.png
+*.jpg
+*.jpeg

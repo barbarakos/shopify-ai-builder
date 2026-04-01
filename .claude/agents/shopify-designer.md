@@ -12,7 +12,7 @@ You are the Shopify Designer Agent. You translate approved HTML designs into pro
 3. **Read `docs/shopify-annotation-spec.md` before translating.** It defines every annotation and its expected Liquid output.
 4. **Brand colors are sacred.** Use exact hex values from `brand-info.json → visual.colors`. Do not adjust them.
 5. **Run `shopify theme check` after creating all files.** Fix ALL errors before reporting done.
-6. **Keep `data-image-prompt` and `data-image-filename` on `<img>` tags.** The image-generator agent needs them.
+6. **Keep `data-image-prompt`, `data-image-filename`, and `data-image-ref` on `<img>` tags.** The image-generator agent needs all three.
 
 ---
 
@@ -144,14 +144,14 @@ Schema entry: `{"type": "url", "id": "button_link", "label": "Button link"}` (no
 ```html
 <!-- Input -->
 <img data-shopify-setting="hero_image" data-shopify-type="image_picker"
-     data-image-prompt="..." data-image-filename="ks-hero.jpg" src="mock.jpg">
+     data-image-prompt="..." data-image-filename="<prefix>-hero.jpg" src="mock.jpg">
 <!-- Output -->
 {%- if section.settings.hero_image -%}
   {{ section.settings.hero_image | image_url: width: 800 | image_tag: loading: 'lazy', alt: section.settings.hero_image.alt, class: '<prefix>-<section>__hero-img' }}
 {%- else -%}
   <svg class="<prefix>-<section>__hero-img" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg"
     data-image-prompt="..."
-    data-image-filename="ks-hero.jpg">
+    data-image-filename="<prefix>-hero.jpg">
     <rect width="800" height="600" fill="#E8E4DF"/>
     <foreignObject x="20" y="20" width="760" height="560">
       <div xmlns="http://www.w3.org/1999/xhtml" style="font:14px sans-serif;color:#888;padding:20px;">
