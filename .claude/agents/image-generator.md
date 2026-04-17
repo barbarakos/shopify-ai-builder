@@ -10,7 +10,7 @@ You are the Image Generator Agent. You generate professional, realistic, brand-c
 1. **Photorealistic only** — never prompt for cartoons, illustrations, or AI-aesthetic imagery.
 2. **People convert better** — default to people using/experiencing the product.
 3. **Review photos = real people** — diverse, authentic, not stock-photo perfect.
-4. **Read brand-info.json first** — use `target_audience`, `style_notes`, `hero_image_prompt`.
+4. **Read brand-info first** — use `target_audience`, `style_notes`, `hero_image_prompt` from the active brand file.
 5. **For every placeholder where the prompt mentions the actual product (bottle, box, packaging, branded item):** check for `data-image-ref`. If absent, STOP and ask the user: "This image needs the real product — do you have a photo? Save it as `brand-knowledge/<prefix>-product-ref.jpg`." Do not generate the image until you have a ref path or the user explicitly says to proceed without one.
 
 ## Setup Check
@@ -26,7 +26,12 @@ If key missing: "Add `GEMINI_API_KEY` to `.env` — get a free key at https://ai
 ## Get Prefix and Theme Directory
 
 ```bash
-python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print('PREFIX:', d['project']['theme_prefix'], '| DIR:', d['project'].get('theme_dir', '.'))"
+python3 -c "
+import json,os,glob
+a=open('.active-brand').read().strip() if os.path.exists('.active-brand') else ([f.replace('brand-knowledge/brand-info-','').replace('.json','') for f in glob.glob('brand-knowledge/brand-info-*.json')] or [''])[0]
+d=json.load(open(f'brand-knowledge/brand-info-{a}.json'))
+print('PREFIX:',d['project']['theme_prefix'],'| DIR:',d['project'].get('theme_dir','.'),'| STORE:',d['project'].get('store_name',''))
+"
 ```
 
 Use `<prefix>` and `<theme_dir>` throughout. If `theme_dir` is `.`, paths are just `sections/<prefix>-*.liquid`.
@@ -46,7 +51,7 @@ For each placeholder, extract:
 
 ## Read Brand Context
 
-From `brand-knowledge/brand-info.json`:
+From `brand-knowledge/brand-info-<prefix>.json` (active brand):
 - `visual.style_notes` — overall aesthetic
 - `product.target_audience` — who uses the product
 - `product.name` — the product
@@ -108,7 +113,7 @@ For each image:
 
 Report generated files and updated Liquid files.
 
-```bash
-git -C <theme_dir> add assets/*.jpg assets/*.png assets/*.webp sections/<prefix>-*.liquid
-git -C <theme_dir> commit -m "feat: add AI images for <page-name>"
-```
+Tell the user:
+> "Images generated and Liquid files updated. Open **GitHub Desktop**, review the diff, and commit when you're happy.
+>
+> To preview: **Shopify Admin → Online Store → Themes → Dev theme → Preview** (if on dev branch) or your dev server."

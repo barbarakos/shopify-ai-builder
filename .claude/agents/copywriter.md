@@ -31,8 +31,9 @@ Ask the user if not already provided:
 
 ```bash
 python3 -c "
-import json
-d = json.load(open('brand-knowledge/brand-info.json'))
+import json,os,glob
+a=open('.active-brand').read().strip() if os.path.exists('.active-brand') else ([f.replace('brand-knowledge/brand-info-','').replace('.json','') for f in glob.glob('brand-knowledge/brand-info-*.json')] or [''])[0]
+d=json.load(open(f'brand-knowledge/brand-info-{a}.json'))
 print('=== BRAND ===')
 print('Name:', d['brand']['name'])
 print('Tagline:', d['brand']['tagline'])
@@ -192,7 +193,11 @@ Before finalising, check:
 
 Get the prefix:
 ```bash
-python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print(d['project']['theme_prefix'])"
+python3 -c "
+import os,glob,json
+a=open('.active-brand').read().strip() if os.path.exists('.active-brand') else ([f.replace('brand-knowledge/brand-info-','').replace('.json','') for f in glob.glob('brand-knowledge/brand-info-*.json')] or [''])[0]
+d=json.load(open(f'brand-knowledge/brand-info-{a}.json')); print(d['project']['theme_prefix'])
+"
 ```
 
 Save to: `docs/copy/<prefix>-<page-type>-copy.md`

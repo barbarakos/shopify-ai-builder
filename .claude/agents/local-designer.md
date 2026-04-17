@@ -21,8 +21,9 @@ You are the Local Designer Agent. You create fast, pixel-perfect HTML/CSS page d
 
 ```bash
 python3 -c "
-import json
-d = json.load(open('brand-knowledge/brand-info.json'))
+import json,os,glob
+a=open('.active-brand').read().strip() if os.path.exists('.active-brand') else ([f.replace('brand-knowledge/brand-info-','').replace('.json','') for f in glob.glob('brand-knowledge/brand-info-*.json')] or [''])[0]
+d=json.load(open(f'brand-knowledge/brand-info-{a}.json'))
 prefix = d['project']['theme_prefix']
 print('Prefix:', prefix)
 print('Brand:', d['brand']['name'])
@@ -39,7 +40,11 @@ print('Testimonials:', d.get('content', {}).get('testimonials', [])[:2])
 
 Also check for a copy spec:
 ```bash
-python3 -c "import json; p=json.load(open('brand-knowledge/brand-info.json'))['project']['theme_prefix']; print(p)"
+python3 -c "
+import os,glob,json
+a=open('.active-brand').read().strip() if os.path.exists('.active-brand') else ([f.replace('brand-knowledge/brand-info-','').replace('.json','') for f in glob.glob('brand-knowledge/brand-info-*.json')] or [''])[0]
+d=json.load(open(f'brand-knowledge/brand-info-{a}.json')); print(d['project']['theme_prefix'])
+"
 # Then:
 ls docs/copy/<prefix>-*.md 2>/dev/null && echo "Copy spec found" || echo "No copy spec"
 ```
@@ -101,7 +106,11 @@ Wait for confirmation before building.
 
 Get prefix and output path:
 ```bash
-python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print(d['project']['theme_prefix'])"
+python3 -c "
+import os,glob,json
+a=open('.active-brand').read().strip() if os.path.exists('.active-brand') else ([f.replace('brand-knowledge/brand-info-','').replace('.json','') for f in glob.glob('brand-knowledge/brand-info-*.json')] or [''])[0]
+d=json.load(open(f'brand-knowledge/brand-info-{a}.json')); print(d['project']['theme_prefix'])
+"
 # Output dir: local-design/<prefix>-<page-type>/
 mkdir -p local-design/<prefix>-<page-type>
 ```
@@ -210,50 +219,58 @@ Build these sections in order:
 
 ---
 
-## Step 5 — Review Loop
+## Step 5 — Live Server Review Loop
 
-After building the file, open it in a browser using Playwright:
+After writing `index.html`, start a live HTTP server so both you and the user can see the page in real time:
 
-```
-mcp__plugin_playwright_playwright__browser_navigate → file:///[absolute path to index.html]
+```bash
+# Kill any existing server on port 8080 first
+lsof -ti:8080 | xargs kill -9 2>/dev/null; true
+# Start server from the design directory
+cd local-design/<prefix>-<page-type> && python3 -m http.server 8080 &
 ```
 
-Take desktop screenshot:
+Then navigate Playwright to the live server and take an initial desktop screenshot to confirm it loaded:
 ```
+mcp__plugin_playwright_playwright__browser_navigate → http://localhost:8080
 mcp__plugin_playwright_playwright__browser_take_screenshot
 ```
 
-Take mobile screenshot:
+Tell the user:
+> "Live server running at **http://localhost:8080** — open it in your browser now. I can see it too. Tell me what to change."
+
+### Iteration loop
+
+When the user gives feedback:
+1. Edit `index.html` directly
+2. Ask the user to refresh their browser (or navigate Playwright to `http://localhost:8080` again)
+3. Take a Playwright screenshot to confirm the change looks correct
+4. Ask: "How does that look? Anything else to change?"
+
+Repeat until the user approves.
+
+### Mobile check
+
+Before finalizing, take a mobile screenshot:
 ```
 mcp__plugin_playwright_playwright__browser_resize → {width: 375, height: 812}
+mcp__plugin_playwright_playwright__browser_navigate → http://localhost:8080
 mcp__plugin_playwright_playwright__browser_take_screenshot
 ```
 
-Show both screenshots to the user. Report:
-- Any layout issues (overflow, misalignment)
-- Any branding mismatches
-- Any sections that look empty or broken
-
-Ask: **"Here's the design. What would you like to change?"**
-
-Apply feedback, reload, re-screenshot. Repeat until the user says it's approved.
+Report any mobile layout issues. Fix them before marking the design as approved.
 
 ---
 
 ## Step 6 — Save Approved Design
 
-When the user approves:
+When the user approves, stop the server and tell the user:
 
 ```bash
-# File is already at local-design/<prefix>-<page-type>/index.html
-echo "Saved at: local-design/<prefix>-<page-type>/index.html"
-
-# Commit
-git add local-design/<prefix>-<page-type>/
-git commit -m "feat: add local design for <prefix>-<page-type> — approved"
+lsof -ti:8080 | xargs kill -9 2>/dev/null; true
+echo "Server stopped."
 ```
 
-Tell the user:
-> "Design approved and saved to `local-design/<prefix>-<page-type>/index.html`.
+> "Design approved. File is at `local-design/<prefix>-<page-type>/index.html`.
 >
 > **Next step:** Run the `shopify-designer` agent and tell it: 'Translate `local-design/<prefix>-<page-type>/index.html` to Shopify Liquid.' It will read the annotations and generate all section files automatically."

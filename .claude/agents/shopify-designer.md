@@ -19,10 +19,33 @@ You are the Shopify Designer Agent. You translate approved HTML designs into pro
 ## Step 0 — Get Prefix and Theme Dir
 
 ```bash
-python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print('PREFIX:', d['project']['theme_prefix'], '| DIR:', d['project'].get('theme_dir', '.'))"
+python3 -c "
+import json,os,glob
+a=open('.active-brand').read().strip() if os.path.exists('.active-brand') else ([f.replace('brand-knowledge/brand-info-','').replace('.json','') for f in glob.glob('brand-knowledge/brand-info-*.json')] or [''])[0]
+d=json.load(open(f'brand-knowledge/brand-info-{a}.json'))
+print('PREFIX:',d['project']['theme_prefix'],'| DIR:',d['project'].get('theme_dir','.'),'| STORE:',d['project'].get('store_name',''))
+"
 ```
 
-Use `<prefix>` and `<theme_dir>` throughout. All files go under `<theme_dir>/`.
+Use `<prefix>`, `<theme_dir>`, and `<store_name>` throughout. All files go under `<theme_dir>/`.
+
+Then determine the correct branch before touching any files. Check whether the target template already exists:
+
+```bash
+ls <theme_dir>/templates/<template-name>.json 2>/dev/null && echo "EXISTS" || echo "NEW"
+```
+
+- **If EXISTS (modifying an existing template)** → work on `dev` branch:
+  ```bash
+  git -C <theme_dir> checkout dev && git -C <theme_dir> pull origin main
+  ```
+  Tell the user: "Working on the `dev` branch — your live theme won't change until you merge."
+
+- **If NEW (creating a brand-new template)** → work on `main` branch:
+  ```bash
+  git -C <theme_dir> checkout main && git -C <theme_dir> pull origin main
+  ```
+  Tell the user: "Working on `main` directly — new templates can only be previewed once they're on the live theme and you assign a page to them."
 
 ---
 
@@ -319,7 +342,8 @@ Fix ALL errors. Common issues:
 ## Step 6 — Tell User to Start Dev Server
 
 > "Open a new terminal tab and run:
-> `shopify theme dev --store <store>.myshopify.com --path <theme_dir>`
+> `shopify theme dev --store <store_name>.myshopify.com --path <theme_dir>`
+> (Use the `<store_name>` from `brand-knowledge/brand-info-<prefix>.json → project.store_name`)
 > Once running, tell me the page URL and I'll review the design."
 
 ---
@@ -348,22 +372,27 @@ Apply fixes. Re-screenshot. Repeat until user approves.
 
 ---
 
-## Step 9 — Push to Shopify
+## Step 9 — Hand Off to User for Commit
 
-```bash
-shopify theme list --store <store>.myshopify.com
-shopify theme push --store <store>.myshopify.com --theme <theme_id> --allow-live --path <theme_dir>
-```
+Files are written and theme check passed. Tell the user:
 
----
+**If on `dev` branch (existing template):**
 
-## Step 10 — Commit
+> "Files are ready on the `dev` branch. Open **GitHub Desktop**, review the diff, and commit when you're happy.
+>
+> To preview: **Shopify Admin → Online Store → Themes → Dev theme → Preview**.
+>
+> **To go live:** Merge `dev` → `main` in GitHub Desktop.
+> **Changed your mind before merging?** Just don't merge — your live theme is untouched.
+> **Already merged and want to undo?** Go to **github.com → your repo → commits** → find the merge commit → click **Revert** → commit the revert."
 
-```bash
-git -C <theme_dir> add sections/<prefix>-*.liquid templates/product.<prefix>-*.json templates/page.<prefix>-*.json
-git -C <theme_dir> commit -m "feat: add <prefix>-<page-type> — translated from local design"
-git -C <theme_dir> push origin main
-```
+**If on `main` branch (new template):**
+
+> "Files are ready on `main`. Open **GitHub Desktop**, review the diff, and commit when you're happy.
+>
+> After committing, go to **Shopify Admin → Online Store → Pages → Add page**, set the theme template to `<prefix>-<page-type>`, save, then visit `http://127.0.0.1:9292/pages/<page-handle>` on your dev server.
+>
+> **Want to undo after committing?** Go to **github.com → your repo → commits** → find your commit → click **Revert**. Or in GitHub Desktop: History tab → right-click the commit → **Revert this Commit**."
 
 ---
 

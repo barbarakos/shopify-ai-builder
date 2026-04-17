@@ -42,85 +42,141 @@ Check if `.env` exists. If not:
 cp .env.example .env
 ```
 
-Read the current `.env` contents. For each empty variable, ask the user:
-- If `GEMINI_API_KEY` is empty: "Do you have a Google Gemini API key? Get one free at https://aistudio.google.com/apikey — needed for AI image generation."
-- If `SHOPIFY_STORE_NAME` is empty: "What is your Shopify store name? (just the slug — e.g. `my-store` for `my-store.myshopify.com`)"
+Read the current `.env` contents. If `GEMINI_API_KEY` is empty, ask:
+- "Do you have a Google Gemini API key? Get one free at https://aistudio.google.com/apikey — needed for AI image generation."
 
-Write their answers into `.env`.
+Write the key into `.env`. Store name is NOT stored in `.env` — it goes in `brand-info-<prefix>.json` (see Step 4).
 
-### 3. Shopify CLI Login
+### 3. Set Brand Prefix and Store Name
 
+Ask:
+> "What 2–4 letter prefix should new files use? This keeps your custom pages separate from the base theme. Use your brand initials — e.g. Nike → `nk`, Kelle Skin → `ks`, The Brand Co → `tb`."
+
+Then ask:
+> "What is your Shopify store name? (just the slug — e.g. `my-store` for `my-store.myshopify.com`)"
+
+Write the prefix to `.active-brand`:
 ```bash
-shopify auth list
+echo "<prefix>" > .active-brand
 ```
 
-If already logged in and the correct store is shown: skip to step 4.
+### 4. Download Theme from Shopify Admin
 
-If not logged in:
+Guide the user through downloading their theme manually — no CLI needed for this step:
+
+> "Let's download your Shopify theme files.
+>
+> 1. Go to **Shopify Admin → Online Store → Themes**
+> 2. Next to your live theme, click **Actions → Download theme file**
+> 3. This downloads a `.zip` file — unzip it to a folder on your computer (e.g. `~/my-store-theme`)
+> 4. Tell me the path to that folder."
+
+Once they provide the path, verify it looks like a theme:
 ```bash
-shopify auth login
+ls <theme_dir>/templates/ <theme_dir>/sections/ <theme_dir>/assets/ 2>/dev/null && echo "Theme files present" || echo "NOT FOUND — check the path"
 ```
-This opens a browser — log in with the Shopify account that has access to the store.
 
-### 4. Set Brand Prefix and Theme Repo Path
-
-Ask two questions:
-
-1. "What 2–4 letter prefix should new files use? This keeps your custom pages separate from the base theme. Use your brand initials — e.g. Nike → `nk`, Kelle Skin → `ks`, The Brand Co → `tb`."
-
-2. "Where is your Shopify theme repo? This is the directory where your theme files live (it can be a separate git repo).
-   - If your theme and this agent repo are the same directory, type `.`
-   - Otherwise provide the path — e.g. `/Users/you/my-store-theme` or `../my-store-theme`"
-
-Once they answer, write both to `brand-knowledge/brand-info.json` using the Edit tool:
-- `project.theme_prefix` = their prefix
-- `project.theme_dir` = the path they provided (`.` if same directory)
+Write initial `brand-knowledge/brand-info-<prefix>.json` with the prefix, theme dir, and store name:
+```python
+import json, os
+prefix = "<prefix>"
+path = f"brand-knowledge/brand-info-{prefix}.json"
+# Load existing or start fresh
+d = json.load(open(path)) if os.path.exists(path) else {}
+d.setdefault('project', {})
+d['project']['theme_prefix'] = prefix
+d['project']['theme_dir'] = "<theme_dir>"
+d['project']['store_name'] = "<store_name>"
+json.dump(d, open(path, 'w'), indent=2)
+print('Written:', path)
+```
 
 Verify:
 ```bash
-python3 -c "import json; d=json.load(open('brand-knowledge/brand-info.json')); print('Prefix:', d['project']['theme_prefix'], '| Theme repo:', d['project']['theme_dir'])"
+python3 -c "
+import json
+prefix = open('.active-brand').read().strip()
+d = json.load(open(f'brand-knowledge/brand-info-{prefix}.json'))
+print('Prefix:', d['project']['theme_prefix'], '| Theme dir:', d['project']['theme_dir'], '| Store:', d['project']['store_name'])
+"
 ```
 
-### 5. Pull Theme from Shopify
+### 5. Create GitHub Repo and Push Theme Code
 
-Ask: "Ready to pull your Shopify theme? This downloads your current live theme files into `<theme_dir>`."
+Guide the user through creating a GitHub repo:
 
-Get `theme_dir`:
+> "Now let's put your theme on GitHub so the AI can track changes safely.
+>
+> 1. Go to **github.com → New repository**
+> 2. Name it something like `my-store-theme`
+> 3. Set it to **Private**
+> 4. Click **Create repository**
+> 5. Copy the repo URL (looks like `https://github.com/yourname/my-store-theme.git`)
+> 6. Tell me the URL."
+
+Once they provide the URL, initialize the repo and push:
 ```bash
-python3 -c "import json; print(json.load(open('brand-knowledge/brand-info.json'))['project']['theme_dir'])"
+git -C <theme_dir> init
+git -C <theme_dir> add .
+git -C <theme_dir> commit -m "initial: theme from Shopify"
+git -C <theme_dir> branch -M main
+git -C <theme_dir> remote add origin <their-url>
+git -C <theme_dir> push -u origin main
 ```
 
-If `theme_dir` is not `.`, verify the directory exists:
+### 6. Create Dev Branch
+
+Create the `dev` branch from `main`:
 ```bash
-ls <theme_dir> 2>/dev/null && echo "exists" || echo "NOT FOUND"
+git -C <theme_dir> checkout -b dev
+git -C <theme_dir> push -u origin dev
 ```
 
-If not found: "That path doesn't exist yet — should I create it, or did you mean a different path?"
-
-Pull:
+Confirm:
 ```bash
-shopify theme pull --store <SHOPIFY_STORE_NAME>.myshopify.com --path <theme_dir>
+git -C <theme_dir> branch -a
 ```
 
-After pulling, verify:
-```bash
-ls <theme_dir>/templates/ <theme_dir>/sections/ <theme_dir>/assets/ 2>/dev/null && echo "Theme files present" || echo "Pull may have failed — check output above"
-```
+You should see both `main` and `dev`.
 
-### 6. Check Git Remote for Theme Repo
+### 7. Connect Themes to GitHub Branches in Shopify Admin
 
-```bash
-git -C <theme_dir> remote -v
-```
+Guide the user through connecting both Shopify themes to GitHub:
 
-If no remote:
-- Ask: "Do you have a GitHub repo for your theme?"
-- If yes: `git -C <theme_dir> remote add origin <their-url>`
-- If no: `gh repo create <store-name>-theme --private --source=<theme_dir> --remote=origin --push`
+> "Now we'll connect Shopify to GitHub so changes automatically sync.
+>
+> **For your LIVE theme:**
+> 1. Go to **Shopify Admin → Online Store → Themes**
+> 2. Next to your live theme → click **Actions → Connect to GitHub**
+> 3. Authorize Shopify to access your GitHub account
+> 4. Select the repo you just created
+> 5. Select branch: **`main`**
+> 6. Click Connect
+>
+> **For your DEV theme (create it first):**
+> 1. Next to your live theme → click **Actions → Duplicate**
+> 2. Rename the duplicate to something like `Dev`
+> 3. Next to the Dev theme → click **Actions → Connect to GitHub**
+> 4. Select the same repo
+> 5. Select branch: **`dev`**
+> 6. Click Connect
+>
+> Let me know when both are connected."
 
-Note: the agent system repo (`shopify-ai-builder`) and the theme repo are separate — git operations on theme files always use `git -C <theme_dir>`.
+### 8. Set Up GitHub Desktop
 
-### 7. Extract Brand Knowledge
+Guide the user through installing GitHub Desktop:
+
+> "Last technical step — install **GitHub Desktop** so you can review and approve changes without touching the command line.
+>
+> 1. Download from **desktop.github.com**
+> 2. Install and sign in with your GitHub account
+> 3. Click **File → Clone repository** → select your theme repo
+> 4. Clone it to a folder on your computer
+>
+> Done! This is how you'll review AI changes and push them live."
+
+### 9. Extract Brand Knowledge
 
 Ask: "What is your brand's website URL? Give me your homepage and product page — I'll extract your colors, fonts, and copy automatically."
 
@@ -129,15 +185,27 @@ Once they provide URLs, say: "I'll extract your brand identity now." Then use th
 ### Completion Report
 
 ```
-✅ Shopify CLI connected to <store>
-✅ Theme pulled to <theme_dir>/ (<N> templates, <N> sections found)
+✅ Theme downloaded and pushed to GitHub
+✅ dev branch created and connected to Dev Shopify theme
+✅ main branch connected to Live Shopify theme
 ✅ Brand prefix set to `<prefix>`
-✅ Theme repo git configured
+✅ GitHub Desktop installed
 ✅ Brand knowledge extracted (or ⚠️ Brand info pending)
 ✅ Image generation ready (or ⚠️ Gemini API key missing)
 ```
 
-Then: "You're all set! To build your first page, say:
-- 'Build me a product landing page for [your product]'
-- 'Build me a listicle for [your product]'
-- 'Build me an advertorial for [your product]'"
+Then:
+> "You're all set! Here's how the workflow works:
+>
+> - The AI writes files to the correct branch (`dev` for existing pages, `main` for new pages)
+> - You review the diff in **GitHub Desktop** and commit when happy
+> - For `dev` changes: merge `dev` → `main` in GitHub Desktop to go live
+> - For `main` changes: they go live once Shopify detects the push
+> - Changed your mind? Go to **github.com → your repo → commits** → find the change → click **Revert**
+>
+> **Adding a second brand later?** Just run setup-wizard again — it will create a new `brand-info-<prefix>.json` and update `.active-brand`.
+>
+> To build your first page, say:
+> - 'Build me a product landing page for [your product]'
+> - 'Build me a listicle for [your product]'
+> - 'Build me an advertorial for [your product]'"

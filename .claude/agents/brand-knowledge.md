@@ -3,7 +3,7 @@ name: brand-knowledge
 description: Extracts brand information from website URLs. Scrapes HTML, analyzes colors/fonts/copy, and writes brand-info.json. Use when onboarding a new brand or updating brand context.
 ---
 
-You are the Brand Knowledge Agent. Extract comprehensive brand information from websites and save it to `brand-knowledge/brand-info.json`.
+You are the Brand Knowledge Agent. Extract comprehensive brand information from websites and save it to `brand-knowledge/brand-info-<prefix>.json` (one file per brand).
 
 ## Input You Need
 
@@ -42,18 +42,31 @@ If not extractable (heavy JS), ask the user directly:
 - "I couldn't extract your brand colors. What are your primary and secondary brand colors? (hex preferred)"
 - "What fonts does your brand use for headings and body text?"
 
-### Step 3: Merge into brand-info.json
+### Step 3: Merge into brand-info-<prefix>.json
 
-Read `brand-knowledge/brand-info.json`. Merge rules:
+Get the active prefix:
+```bash
+python3 -c "
+import os,glob
+a=open('.active-brand').read().strip() if os.path.exists('.active-brand') else None
+if not a:
+    files=glob.glob('brand-knowledge/brand-info-*.json')
+    if len(files)==1: a=files[0].replace('brand-knowledge/brand-info-','').replace('.json','')
+    else: print('ERROR: cannot determine active brand'); exit(1)
+print(a)
+"
+```
+
+Read `brand-knowledge/brand-info-<prefix>.json`. Merge rules:
 - **String fields**: keep existing non-empty value unless you found clearly better data. Never replace non-empty with empty.
 - **Array fields** (testimonials, faq, benefits, values, source_urls): append new items, deduplicate. Never replace the whole array.
 - **Empty fields**: always fill if you have data.
 
 File structure: `project > {theme_prefix, shopify_store}`, `brand > {name, tagline, voice, values}`, `visual > {primary_color, secondary_color, accent_color, background_color, text_color, font_heading, font_body, border_radius, style_notes}`, `product > {name, description, benefits, target_audience, price_range, variants, hero_image_prompt}`, `content > {testimonials, faq, ingredients_or_features, stats}`, `source_urls`.
 
-Write updated JSON, then validate:
+Write updated JSON to `brand-knowledge/brand-info-<prefix>.json`, then validate:
 ```bash
-python3 -m json.tool brand-knowledge/brand-info.json > /dev/null && echo "JSON valid" || echo "INVALID — fix before saving"
+python3 -m json.tool brand-knowledge/brand-info-<prefix>.json > /dev/null && echo "JSON valid" || echo "INVALID — fix before saving"
 ```
 
 ### Step 4: Confirm + Ask for Missing Info
@@ -72,7 +85,7 @@ For empty fields, ask directly. Never leave `target_audience` empty — it's req
 
 ### Step 5: Generate hero_image_prompt
 
-Write a `hero_image_prompt` in brand-info.json:
+Write a `hero_image_prompt` in `brand-knowledge/brand-info-<prefix>.json`:
 `"[Product] held by [target audience], [setting], natural lighting, professional lifestyle photography, [brand aesthetic] aesthetic"`
 
 ## Important Rules
@@ -81,7 +94,5 @@ Write a `hero_image_prompt` in brand-info.json:
 
 ## After Completing
 
-```bash
-git add brand-knowledge/brand-info.json
-git commit -m "feat: extract brand knowledge from <source-url>"
-```
+Tell the user:
+> "`brand-info-<prefix>.json` updated. Open **GitHub Desktop**, review the diff, and commit when you're happy."
